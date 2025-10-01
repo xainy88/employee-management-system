@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Employee Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; }
+        .header { background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); color: white; padding: 20px; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 10px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { padding: 12px 24px; background: #28a745; color: white; text-decoration: none; border-radius: 6px; display: inline-block; margin: 5px; border: none; cursor: pointer; font-size: 16px; }
+        .btn-clock-in { background: #28a745; }
+        .btn-clock-out { background: #dc3545; }
+        .btn-edit { background: #007bff; }
+        .btn-disabled { background: #6c757d; cursor: not-allowed; }
+        .clock-status { text-align: center; padding: 20px; margin: 20px 0; border-radius: 10px; }
+        .clocked-in { background: #d4edda; color: #155724; border: 2px solid #c3e6cb; }
+        .clocked-out { background: #f8d7da; color: #721c24; border: 2px solid #f5c6cb; }
+        .current-time { font-size: 24px; font-weight: bold; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e1e1e1; }
+        th { background: #f8f9fa; font-weight: 600; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+        .summary-item { text-align: center; padding: 20px; background: white; border-radius: 8px; border: 1px solid #e1e1e1; }
+        .summary-value { font-size: 24px; font-weight: bold; color: #28a745; margin: 10px 0; }
+        .real-time-clock { background: #2c3e50; color: white; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>👤 Employee Dashboard</h1>
+            <p>Welcome, {{ employee_name }} (ID: {{ user_id }})</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <a href="/logout" class="btn" style="background: #6c757d;">🚪 Logout</a>
+
+        <!-- Real-time Clock -->
+        <div class="real-time-clock">
+            <h3>🕒 Current Time</h3>
+            <div class="current-time" id="currentTime">{{ now.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+        </div>
+
+        <!-- Clock In/Out Section -->
+        <div class="card">
+            <h2>⏰ Time Clock</h2>
+            <div class="clock-status {{ 'clocked-in' if clock_status.is_clocked_in else 'clocked-out' }}">
+                {% if clock_status.is_clocked_in %}
+                <h3>✅ Currently Clocked In</h3>
+                <p>You clocked in at: <strong>{{ clock_status.clock_in_time }}</strong></p>
+                <p>Duration: <strong id="clockDuration">Calculating...</strong></p>
+                <form action="/clock/out" method="POST" style="margin-top: 15px;">
+                    <button type="submit" class="btn btn-clock-out">🛑 Clock Out</button>
+                </form>
+                {% else %}
+                <h3>⏸️ Currently Clocked Out</h3>
+                <p>Ready to start your work day?</p>
+                <form action="/clock/in" method="POST" style="margin-top: 15px;">
+                    <button type="submit" class="btn btn-clock-in">✅ Clock In</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Manual Entry Form -->
+        <div class="card">
+            <h2>📝 Manual Time Entry</h2>
+            <p><small>Use this form for manual time corrections or past entries</small></p>
+            <form action="/add" method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                <div>
+                    <label for="date">Date:</label>
+                    <input type="date" id="date" name="date" value="{{ now.strftime('%Y-%m-%d') }}" required style="width: 100%; padding: 10px;">
+                </div>
+                <div>
+                    <label for="time_in">Time In:</label>
+                    <input type="time" id="time_in" name="time_in" required style="width: 100%; padding: 10px;">
+                </div>
+                <div>
+                    <label for="time_out">Time Out:</label>
+                    <input type="time" id="time_out" name="time_out" required style="width: 100%; padding: 10px;">
+                </div>
+                <div>
+                    <label for="hourly_rate">Hourly Rate (RM):</label>
+                    <input type="number" id="hourly_rate" name="hourly_rate" step="0.01" value="9.00" style="width: 100%; padding: 10px;">
+                </div>
+                <div>
+                    <label for="advance">Advance (RM):</label>
+                    <input type="number" id="advance" name="advance" step="0.01" value="0" style="width: 100%; padding: 10px;">
+                </div>
+                <div>
+                    <label for="food">Food Allowance (RM):</label>
+                    <input type="number" id="food" name="food" step="0.01" value="0" style="width: 100%; padding: 10px;">
+                </div>
+                <div style="grid-column: 1 / -1;">
+                    <label>
+                        <input type="checkbox" id="is_holiday" name="is_holiday"> Holiday Work
+                    </label>
+                </div>
+                <div style="grid-column: 1 / -1;">
+                    <button type="submit" class="btn">💾 Save Entry</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Today's Summary -->
+        <div class="card">
+            <h2>📊 Today's Summary ({{ now.strftime('%Y-%m-%d') }})</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div>Today's Hours</div>
+                    <div class="summary-value">
+                        {% set today_hours = [] %}
+                        {% for entry in entries %}
+                            {% if entry.date == now.strftime('%Y-%m-%d') %}
+                                {% set _ = today_hours.append(entry.hours) %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ "%.1f"|format(today_hours|sum) if today_hours else 0 }}
+                    </div>
+                    <div>hours</div>
+                </div>
+                <div class="summary-item">
+                    <div>Today's Earnings</div>
+                    <div class="summary-value">
+                        RM 
+                        {% set today_earnings = [] %}
+                        {% for entry in entries %}
+                            {% if entry.date == now.strftime('%Y-%m-%d') %}
+                                {% set _ = today_earnings.append(entry.daily_pay) %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ "%.2f"|format(today_earnings|sum) if today_earnings else 0 }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Work Entries -->
+        <div class="card">
+            <h2>📋 Work History</h2>
+            {% if entries %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>Hours</th>
+                        <th>Rate</th>
+                        <th>Advance</th>
+                        <th>Food</th>
+                        <th>Holiday</th>
+                        <th>Daily Pay</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td>{{ entry.date }}</td>
+                        <td>{{ entry.time_in }}</td>
+                        <td>{{ entry.time_out }}</td>
+                        <td>{{ entry.hours }}</td>
+                        <td>RM {{ entry.hourly_rate }}</td>
+                        <td>RM {{ entry.advance }}</td>
+                        <td>RM {{ entry.food }}</td>
+                        <td>{{ 'Yes' if entry.is_holiday else 'No' }}</td>
+                        <td style="font-weight: bold; color: #28a745;">RM {{ entry.daily_pay }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="text-align: center; color: #666; padding: 20px;">No work entries found.</p>
+            {% endif %}
+        </div>
+
+        <!-- Financial Summary -->
+        <div class="card">
+            <h2>💰 Financial Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div>Total Hours</div>
+                    <div class="summary-value">{{ "%.1f"|format(totals.total_hours) }}</div>
+                </div>
+                <div class="summary-item">
+                    <div>Normal Pay</div>
+                    <div class="summary-value">RM {{ totals.total_normal }}</div>
+                </div>
+                <div class="summary-item">
+                    <div>Overtime Pay</div>
+                    <div class="summary-value">RM {{ totals.total_overtime }}</div>
+                </div>
+                <div class="summary-item">
+                    <div>Holiday Pay</div>
+                    <div class="summary-value">RM {{ totals.total_holiday }}</div>
+                </div>
+                <div class="summary-item" style="background: #e8f5e8;">
+                    <div>Grand Total</div>
+                    <div class="summary-value" style="color: #1e7e34;">RM {{ totals.grand_total }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update current time every second
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            }).replace(',', '');
+            document.getElementById('currentTime').textContent = timeString;
+            
+            // Update clock duration if clocked in
+            {% if clock_status.is_clocked_in %}
+            const clockInTime = new Date();
+            const [hours, minutes] = '{{ clock_status.clock_in_time }}'.split(':');
+            clockInTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+            
+            const diffMs = now - clockInTime;
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            
+            document.getElementById('clockDuration').textContent = 
+                diffHours + 'h ' + diffMinutes + 'm';
+            {% endif %}
+        }
+        
+        // Set current time for manual entry form
+        function setCurrentTimes() {
+            const now = new Date();
+            const timeString = now.toTimeString().substring(0, 5);
+            
+            // Set current time as default for manual entry
+            document.getElementById('time_in').value = timeString;
+            
+            // Set time out to 1 hour later
+            const later = new Date(now.getTime() + 60 * 60 * 1000);
+            const laterString = later.toTimeString().substring(0, 5);
+            document.getElementById('time_out').value = laterString;
+        }
+        
+        // Initialize
+        updateCurrentTime();
+        setCurrentTimes();
+        setInterval(updateCurrentTime, 1000);
+        
+        // Auto-fill today's date for manual entry
+        document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    </script>
+</body>
+</html>

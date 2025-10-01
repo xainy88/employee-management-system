@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Monthly Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; }
+        .header { background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); color: white; padding: 20px; }
+        .container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 10px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { padding: 10px 20px; background: #28a745; color: white; text-decoration: none; border-radius: 6px; display: inline-block; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e1e1e1; }
+        th { background: #f8f9fa; font-weight: 600; }
+        .month-total { background: #e8f5e8; font-weight: 600; }
+        .employee-section { border: 2px solid #e1e1e1; border-radius: 8px; padding: 0; margin: 20px 0; overflow: hidden; }
+        .employee-summary { background: #f8f9fa; padding: 15px; border-bottom: 1px solid #e1e1e1; }
+        .employee-totals { background: #e8f5e8; font-weight: 600; }
+        .print-only { display: none; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 10px 0; }
+        .summary-item { text-align: center; padding: 10px; background: white; border-radius: 5px; border: 1px solid #e1e1e1; }
+        .summary-value { font-weight: bold; color: #28a745; }
+        @media print {
+            .no-print { display: none; }
+            .print-only { display: block; }
+            body { background: white; }
+            .card { box-shadow: none; border: 1px solid #ddd; }
+            .btn { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>📊 Admin Monthly Report</h1>
+            <p>Complete overview of all employee entries</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="no-print">
+            <a href="/admin" class="btn">⬅ Back to Dashboard</a>
+            <a href="/export" class="btn" style="background: #007bff;">📥 Export to Excel</a>
+            <button onclick="window.print()" class="btn" style="background: #6c757d;">🖨️ Print Report</button>
+        </div>
+
+        <div class="print-only">
+            <h2 style="text-align: center; color: #333;">Monthly Work Report - Summary</h2>
+            <p style="text-align: center; color: #666;">Generated on: {{ now.strftime('%Y-%m-%d %H:%M') }}</p>
+        </div>
+
+        <!-- Overall Monthly Summary -->
+        <div class="card">
+            <h2>💰 Monthly Financial Summary</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Total Entries</th>
+                        <th>Normal Pay</th>
+                        <th>Overtime Pay</th>
+                        <th>Holiday Pay</th>
+                        <th>Food Allowance</th>
+                        <th>Advance Taken</th>
+                        <th>Grand Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for month in monthly_data %}
+                    <tr class="month-total">
+                        <td><strong>{{ month.month }}</strong></td>
+                        <td>{{ month.entries_count }}</td>
+                        <td>RM {{ month.total_normal }}</td>
+                        <td>RM {{ month.total_overtime }}</td>
+                        <td>RM {{ month.total_holiday }}</td>
+                        <td>RM {{ month.total_food }}</td>
+                        <td>RM {{ month.total_advance }}</td>
+                        <td style="color: #28a745;"><strong>RM {{ month.grand_total }}</strong></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #666;">No monthly data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Employee Summary Totals -->
+        <div class="card">
+            <h2>👥 Employee Summary Totals</h2>
+            
+            {% if employees and employees|length > 0 %}
+                {% for employee in employees %}
+                {% set employee_entries = [] %}
+                {% for entry in all_entries %}
+                    {% if entry['user_id'] == employee['user_id'] %}
+                        {% set _ = employee_entries.append(entry) %}
+                    {% endif %}
+                {% endfor %}
+                
+                {% if employee_entries|length > 0 %}
+                {% set total_hours = 0 %}
+                {% set total_normal = 0 %}
+                {% set total_overtime = 0 %}
+                {% set total_holiday = 0 %}
+                {% set total_advance = 0 %}
+                {% set total_food = 0 %}
+                {% set grand_total = 0 %}
+                {% set entries_count = employee_entries|length %}
+                
+                {% for entry in employee_entries %}
+                    {% set total_hours = total_hours + entry['hours'] %}
+                    {% set total_advance = total_advance + entry['advance'] %}
+                    {% set total_food = total_food + entry['food'] %}
+                    {% set grand_total = grand_total + entry['daily_pay'] %}
+                    
+                    {% if entry['is_holiday'] %}
+                        {% set total_holiday = total_holiday + (entry['hours'] * entry['hourly_rate'] * 1.5) %}
+                    {% else %}
+                        {% set normal_hours = entry['hours'] if entry['hours'] <= 8 else 8 %}
+                        {% set overtime_hours = entry['hours'] - 8 if entry['hours'] > 8 else 0 %}
+                        {% set total_normal = total_normal + (normal_hours * entry['hourly_rate']) %}
+                        {% set total_overtime = total_overtime + (overtime_hours * entry['hourly_rate'] * 1.5) %}
+                    {% endif %}
+                {% endfor %}
+                
+                <div class="employee-section">
+                    <div class="employee-summary">
+                        <h3>👤 {{ employee['full_name'] }} (ID: {{ employee['user_id'] }})</h3>
+                        <p>Default Rate: RM {{ employee['default_rate'] }}/hour | Entries: {{ entries_count }}</p>
+                    </div>
+                    
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div>Total Hours</div>
+                            <div class="summary-value">{{ "%.1f"|format(total_hours) }} hrs</div>
+                        </div>
+                        <div class="summary-item">
+                            <div>Normal Pay</div>
+                            <div class="summary-value">RM {{ "%.2f"|format(total_normal) }}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div>Overtime Pay</div>
+                            <div class="summary-value">RM {{ "%.2f"|format(total_overtime) }}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div>Holiday Pay</div>
+                            <div class="summary-value">RM {{ "%.2f"|format(total_holiday) }}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div>Food Allowance</div>
+                            <div class="summary-value">RM {{ "%.2f"|format(total_food) }}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div>Advance Taken</div>
+                            <div class="summary-value">RM {{ "%.2f"|format(total_advance) }}</div>
+                        </div>
+                        <div class="summary-item" style="background: #e8f5e8; border-color: #28a745;">
+                            <div><strong>Grand Total</strong></div>
+                            <div class="summary-value" style="color: #1e7e34;">RM {{ "%.2f"|format(grand_total) }}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Monthly Breakdown for this Employee -->
+                    {% if employee_monthly_data and employee['user_id'] in employee_monthly_data and employee_monthly_data[employee['user_id']]|length > 0 %}
+                    <div style="padding: 15px;">
+                        <h4>📅 Monthly Breakdown</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Entries</th>
+                                    <th>Total Hours</th>
+                                    <th>Normal Pay</th>
+                                    <th>Overtime Pay</th>
+                                    <th>Holiday Pay</th>
+                                    <th>Monthly Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for month in employee_monthly_data[employee['user_id']] %}
+                                <tr>
+                                    <td>{{ month.month }}</td>
+                                    <td>{{ month.entries_count }}</td>
+                                    <td>{{ month.total_hours }} hrs</td>
+                                    <td>RM {{ month.total_normal }}</td>
+                                    <td>RM {{ month.total_overtime }}</td>
+                                    <td>RM {{ month.total_holiday }}</td>
+                                    <td style="font-weight: bold; color: #28a745;">RM {{ month.grand_total }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            {% else %}
+            <div style="text-align: center; color: #666; padding: 40px;">
+                <h3>No employee data available</h3>
+                <p>Add employees and work entries to see reports</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Quick Summary Table -->
+        <div class="card">
+            <h2>📋 Quick Employee Summary</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Total Entries</th>
+                        <th>Total Hours</th>
+                        <th>Normal Pay</th>
+                        <th>Overtime Pay</th>
+                        <th>Holiday Pay</th>
+                        <th>Food + Advance</th>
+                        <th>Grand Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if employees and employees|length > 0 %}
+                        {% for employee in employees %}
+                        {% set employee_entries = [] %}
+                        {% for entry in all_entries %}
+                            {% if entry['user_id'] == employee['user_id'] %}
+                                {% set _ = employee_entries.append(entry) %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if employee_entries|length > 0 %}
+                        {% set total_hours = 0 %}
+                        {% set total_normal = 0 %}
+                        {% set total_overtime = 0 %}
+                        {% set total_holiday = 0 %}
+                        {% set total_advance = 0 %}
+                        {% set total_food = 0 %}
+                        {% set grand_total = 0 %}
+                        {% set entries_count = employee_entries|length %}
+                        
+                        {% for entry in employee_entries %}
+                            {% set total_hours = total_hours + entry['hours'] %}
+                            {% set total_advance = total_advance + entry['advance'] %}
+                            {% set total_food = total_food + entry['food'] %}
+                            {% set grand_total = grand_total + entry['daily_pay'] %}
+                            
+                            {% if entry['is_holiday'] %}
+                                {% set total_holiday = total_holiday + (entry['hours'] * entry['hourly_rate'] * 1.5) %}
+                            {% else %}
+                                {% set normal_hours = entry['hours'] if entry['hours'] <= 8 else 8 %}
+                                {% set overtime_hours = entry['hours'] - 8 if entry['hours'] > 8 else 0 %}
+                                {% set total_normal = total_normal + (normal_hours * entry['hourly_rate']) %}
+                                {% set total_overtime = total_overtime + (overtime_hours * entry['hourly_rate'] * 1.5) %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <tr>
+                            <td><strong>{{ employee['full_name'] }}</strong><br><small>{{ employee['user_id'] }}</small></td>
+                            <td>{{ entries_count }}</td>
+                            <td>{{ "%.1f"|format(total_hours) }} hrs</td>
+                            <td>RM {{ "%.2f"|format(total_normal) }}</td>
+                            <td>RM {{ "%.2f"|format(total_overtime) }}</td>
+                            <td>RM {{ "%.2f"|format(total_holiday) }}</td>
+                            <td>RM {{ "%.2f"|format(total_food - total_advance) }}</td>
+                            <td style="font-weight: bold; color: #28a745;">RM {{ "%.2f"|format(grand_total) }}</td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #666;">No employee data available</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Add current date for printing
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const nowElement = document.querySelector('.print-only p');
+            if (nowElement) {
+                nowElement.textContent = 'Generated on: ' + now.toLocaleString();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monthly Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; }
+        .header-content { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 10px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; display: inline-block; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e1e1e1; }
+        th { background: #f8f9fa; font-weight: 600; }
+        .month-total { background: #e8f5e8; font-weight: 600; }
+        .serial-no { text-align: center; font-weight: bold; color: #666; }
+        .daily-pay { font-weight: bold; color: #28a745; }
+        .print-only { display: none; }
+        @media print {
+            .no-print { display: none; }
+            .print-only { display: block; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>📈 Monthly Report - {{ user_id }}</h1>
+            <p>Your comprehensive earnings breakdown</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="no-print">
+            <a href="/" class="btn">⬅ Back to Dashboard</a>
+            <button onclick="window.print()" class="btn" style="background: #28a745;">🖨️ Print Report</button>
+        </div>
+
+        <div class="print-only">
+            <h2 style="text-align: center;">Personal Monthly Work Report</h2>
+            <p style="text-align: center;">Employee: {{ user_id }} | Generated on: {{ now.strftime('%Y-%m-%d %H:%M') }}</p>
+        </div>
+
+        <!-- Monthly Summary -->
+        <div class="card">
+            <h2>💰 Monthly Financial Summary</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Total Entries</th>
+                        <th>Normal Pay</th>
+                        <th>Overtime Pay</th>
+                        <th>Holiday Pay</th>
+                        <th>Food Allowance</th>
+                        <th>Advance Taken</th>
+                        <th>Grand Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for month in monthly_data %}
+                    <tr class="month-total">
+                        <td><strong>{{ month.month }}</strong></td>
+                        <td>{{ month.entries_count }}</td>
+                        <td>RM {{ month.total_normal }}</td>
+                        <td>RM {{ month.total_overtime }}</td>
+                        <td>RM {{ month.total_holiday }}</td>
+                        <td>RM {{ month.total_food }}</td>
+                        <td>RM {{ month.total_advance }}</td>
+                        <td style="color: #28a745;"><strong>RM {{ month.grand_total }}</strong></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #666;">No monthly data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- All Entries -->
+        <div class="card">
+            <h2>📋 All Your Work Entries</h2>
+            <p>Showing {{ all_entries|length }} total entries</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>Hours</th>
+                        <th>Rate/Hour</th>
+                        <th>Advance</th>
+                        <th>Food</th>
+                        <th>Holiday</th>
+                        <th>Daily Payment</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in all_entries %}
+                    <tr>
+                        <td class="serial-no">{{ loop.index }}</td>
+                        <td>{{ entry.date }}</td>
+                        <td>{{ entry.time_in }}</td>
+                        <td>{{ entry.time_out }}</td>
+                        <td><strong>{{ entry.hours }} hrs</strong></td>
+                        <td>{{ entry.hourly_rate }} RM</td>
+                        <td>{{ entry.advance }} RM</td>
+                        <td>{{ entry.food }} RM</td>
+                        <td>{% if entry.is_holiday %}✅{% else %}❌{% endif %}</td>
+                        <td class="daily-pay"><strong>RM {{ entry.daily_pay }}</strong></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" style="text-align: center; color: #666; padding: 40px;">
+                            <h3>No entries found</h3>
+                            <p>Add work entries to see your monthly report</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Overall Totals -->
+        {% if overall_totals %}
+        <div class="card">
+            <h2>📊 Overall Summary</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <div>Total Hours</div>
+                    <div style="font-size: 20px; font-weight: bold; color: #667eea;">{{ overall_totals.total_hours }} hrs</div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <div>Normal Pay</div>
+                    <div style="font-size: 20px; font-weight: bold; color: #667eea;">RM {{ overall_totals.total_normal }}</div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <div>Overtime Pay</div>
+                    <div style="font-size: 20px; font-weight: bold; color: #667eea;">RM {{ overall_totals.total_overtime }}</div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <div>Grand Total</div>
+                    <div style="font-size: 20px; font-weight: bold; color: #28a745;">RM {{ overall_totals.grand_total }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const nowElement = document.querySelector('.print-only p');
+            if (nowElement) {
+                nowElement.textContent = 'Employee: {{ user_id }} | Generated on: ' + now.toLocaleString();
+            }
+        });
+    </script>
+</body>
+</html>

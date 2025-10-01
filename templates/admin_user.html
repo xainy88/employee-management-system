@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Details - Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; }
+        .header { background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; padding: 20px; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 10px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 6px; display: inline-block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e1e1e1; }
+        th { background: #f8f9fa; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>👤 User Details: {{ user_id }}</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <a href="/admin" class="btn">⬅ Back to Admin Dashboard</a>
+        
+        <div class="card">
+            <h2>💰 Earnings Summary</h2>
+            <p>Normal Pay: RM {{ totals.total_normal }} | 
+               Overtime Pay: RM {{ totals.total_overtime }} | 
+               Holiday Pay: RM {{ totals.total_holiday }} | 
+               Grand Total: RM {{ totals.grand_total }}</p>
+        </div>
+
+        <div class="card">
+            <h2>📋 All Entries</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Employee</th>
+                        <th>Hours</th>
+                        <th>Rate</th>
+                        <th>Advance</th>
+                        <th>Food</th>
+                        <th>Holiday</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td>{{ entry.date }}</td>
+                        <td>{{ entry.employee }}</td>
+                        <td>{{ entry.hours }}</td>
+                        <td>{{ entry.hourly_rate }} RM</td>
+                        <td>{{ entry.advance }} RM</td>
+                        <td>{{ entry.food }} RM</td>
+                        <td>{% if entry.is_holiday %}✅{% else %}❌{% endif %}</td>
+                        <td>
+                            <a href="/delete/{{ entry.id }}" class="btn btn-danger" onclick="return confirm('Delete this entry?')">Delete</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align: center;">No entries found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

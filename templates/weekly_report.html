@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Weekly Report - Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; }
+        .header { background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white; padding: 20px; }
+        .container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 10px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { padding: 10px 20px; background: #17a2b8; color: white; text-decoration: none; border-radius: 6px; display: inline-block; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e1e1e1; }
+        th { background: #f8f9fa; font-weight: 600; }
+        .week-total { background: #e8f5e8; font-weight: 600; }
+        .employee-row { background: #f8f9fa; }
+        .print-only { display: none; }
+        @media print {
+            .no-print { display: none; }
+            .print-only { display: block; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>📅 Weekly Report</h1>
+            <p>Last 4 weeks overview</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="no-print">
+            <a href="/admin" class="btn" style="background: #6c757d;">⬅ Back to Dashboard</a>
+            <a href="/export" class="btn" style="background: #28a745;">📥 Export to Excel</a>
+            <button onclick="window.print()" class="btn" style="background: #007bff;">🖨️ Print Report</button>
+        </div>
+
+        <div class="print-only">
+            <h2 style="text-align: center;">Weekly Work Report</h2>
+            <p style="text-align: center;">Generated on: {{ now.strftime('%Y-%m-%d %H:%M') }}</p>
+        </div>
+
+        <!-- Weekly Summary -->
+        <div class="card">
+            <h2>💰 Weekly Financial Summary</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Week</th>
+                        <th>Total Entries</th>
+                        <th>Normal Pay</th>
+                        <th>Overtime Pay</th>
+                        <th>Holiday Pay</th>
+                        <th>Food Allowance</th>
+                        <th>Advance Taken</th>
+                        <th>Grand Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for week in weekly_data %}
+                    <tr class="week-total">
+                        <td><strong>{{ week.week }}</strong></td>
+                        <td>{{ week.entries_count }}</td>
+                        <td>RM {{ week.total_normal }}</td>
+                        <td>RM {{ week.total_overtime }}</td>
+                        <td>RM {{ week.total_holiday }}</td>
+                        <td>RM {{ week.total_food }}</td>
+                        <td>RM {{ week.total_advance }}</td>
+                        <td style="color: #28a745;"><strong>RM {{ week.grand_total }}</strong></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #666;">No weekly data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Detailed Weekly Entries -->
+        <div class="card">
+            <h2>📋 Detailed Weekly Entries</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Date</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>Hours</th>
+                        <th>Rate</th>
+                        <th>Advance</th>
+                        <th>Food</th>
+                        <th>Holiday</th>
+                        <th>Daily Pay</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td><strong>{{ entry.full_name }} ({{ entry.user_id }})</strong></td>
+                        <td>{{ entry.date }}</td>
+                        <td>{{ entry.time_in }}</td>
+                        <td>{{ entry.time_out }}</td>
+                        <td><strong>{{ entry.hours }} hrs</strong></td>
+                        <td>{{ entry.hourly_rate }} RM</td>
+                        <td>{{ entry.advance }} RM</td>
+                        <td>{{ entry.food }} RM</td>
+                        <td>{% if entry.is_holiday %}✅{% else %}❌{% endif %}</td>
+                        <td style="font-weight: bold; color: #28a745;">RM {{ entry.daily_pay }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" style="text-align: center; color: #666; padding: 40px;">
+                            No entries found for the last 4 weeks
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

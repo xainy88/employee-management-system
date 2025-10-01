@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard</h2>
+        <p class="text-muted">Manage your employee payroll system</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h2 class="card-title">{{ total_employees }}</h2>
+                        <p class="card-text">Total Employees</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h2 class="card-title">{{ active_employees }}</h2>
+                        <p class="card-text">Active Employees</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user-check fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card text-white bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h2 class="card-title">{{ inactive_employees }}</h2>
+                        <p class="card-text">Inactive Employees</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user-times fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-rocket me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-2 col-6">
+                        <a href="{{ url_for('manage_employees') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-users me-1"></i>Employees
+                        </a>
+                    </div>
+                    <div class="col-md-2 col-6">
+                        <a href="{{ url_for('manage_work_entries') }}" class="btn btn-info w-100">
+                            <i class="fas fa-clock me-1"></i>Work Entries
+                        </a>
+                    </div>
+                    <div class="col-md-2 col-6">
+                        <a href="{{ url_for('manage_advance_payments') }}" class="btn btn-warning w-100">
+                            <i class="fas fa-money-bill-wave me-1"></i>Advances
+                        </a>
+                    </div>
+                    <div class="col-md-2 col-6">
+                        <a href="{{ url_for('manage_food_expenses') }}" class="btn btn-success w-100">
+                            <i class="fas fa-utensils me-1"></i>Food Expenses
+                        </a>
+                    </div>
+                    <div class="col-md-2 col-6">
+                        <a href="{{ url_for('reports') }}" class="btn btn-secondary w-100">
+                            <i class="fas fa-chart-bar me-1"></i>Reports
+                        </a>
+                    </div>
+                    <div class="col-md-2 col-6">
+                        <a href="{{ url_for('export_excel') }}?month={{ current_month }}" class="btn btn-dark w-100">
+                            <i class="fas fa-file-excel me-1"></i>Export Excel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payroll Summary -->
+<div class="card">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payroll Summary - {{ current_month }}</h5>
+        <a href="{{ url_for('export_excel') }}?month={{ current_month }}" class="btn btn-light btn-sm">
+            <i class="fas fa-file-excel me-1"></i>Export
+        </a>
+    </div>
+    <div class="card-body">
+        {% if payroll_data %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Full Name</th>
+                        <th>Hourly Rate</th>
+                        <th>Normal Hours</th>
+                        <th>Overtime Hours</th>
+                        <th>Holiday Hours</th>
+                        <th>Normal Pay</th>
+                        <th>Overtime Pay</th>
+                        <th>Holiday Pay</th>
+                        <th>Total Earnings</th>
+                        <th>Advances</th>
+                        <th>Food Expenses</th>
+                        <th>Grand Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in payroll_data %}
+                    {% set hourly_rate = employee.hourly_rate %}
+                    {% set normal_pay = employee.total_normal_hours * hourly_rate %}
+                    {% set overtime_pay = employee.total_overtime_hours * hourly_rate * 1.5 %}
+                    {% set holiday_pay = employee.total_holiday_hours * hourly_rate * 1.5 %}
+                    {% set total_earnings = normal_pay + overtime_pay + holiday_pay %}
+                    {% set grand_total = total_earnings - employee.total_advances - employee.total_food_expenses %}
+                    <tr>
+                        <td><strong>{{ employee.employee_id }}</strong></td>
+                        <td>{{ employee.full_name }}</td>
+                        <td>RM {{ "%.2f"|format(hourly_rate) }}</td>
+                        <td>{{ "%.2f"|format(employee.total_normal_hours) }}</td>
+                        <td>{{ "%.2f"|format(employee.total_overtime_hours) }}</td>
+                        <td>{{ "%.2f"|format(employee.total_holiday_hours) }}</td>
+                        <td class="text-success">RM {{ "%.2f"|format(normal_pay) }}</td>
+                        <td class="text-warning">RM {{ "%.2f"|format(overtime_pay) }}</td>
+                        <td class="text-danger">RM {{ "%.2f"|format(holiday_pay) }}</td>
+                        <td class="text-primary fw-bold">RM {{ "%.2f"|format(total_earnings) }}</td>
+                        <td class="text-danger">- RM {{ "%.2f"|format(employee.total_advances) }}</td>
+                        <td class="text-danger">- RM {{ "%.2f"|format(employee.total_food_expenses) }}</td>
+                        <td class="text-success fw-bold">RM {{ "%.2f"|format(grand_total) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No payroll data found</h5>
+            <p class="text-muted">Add employees and work entries to see payroll summary.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2><i class="fas fa-history me-2"></i>Payment History - {{ employee.full_name }}</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="fas fa-user me-2"></i>Employee Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <p><strong>Employee ID:</strong> {{ employee.employee_id }}</p>
+                    <p><strong>Name:</strong> {{ employee.full_name }}</p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Bank:</strong> {{ employee.bank_name or 'Not set' }}</p>
+                    <p><strong>Account No:</strong> {{ employee.bank_account_number or 'Not set' }}</p>
+                </div>
+                <div class="col-md-4">
+                    <a href="{{ url_for('admin_payments') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Payments
+                    </a>
+                    <a href="{{ url_for('make_payment', employee_id=employee.employee_id) }}" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i>Make New Payment
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment History</h5>
+            <span class="badge bg-light text-dark">{{ payment_history|length }} records</span>
+        </div>
+        <div class="card-body">
+            {% if payment_history %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payment_history %}
+                        <tr>
+                            <td>{{ payment.payment_date }}</td>
+                            <td class="text-success fw-bold">RM {{ "%.2f"|format(payment.amount_paid) }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ payment.payment_type|title }}</span>
+                            </td>
+                            <td>{{ payment.description or '-' }}</td>
+                            <td>
+                                <span class="badge {% if payment.status == 'paid' %}bg-success{% elif payment.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ payment.status|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('edit_payment', payment_id=payment.id) }}" class="btn btn-warning">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <form method="POST" action="{{ url_for('delete_payment', payment_id=payment.id) }}" 
+                                          style="display: inline;" 
+                                          onsubmit="return confirm('Are you sure you want to delete this payment record?');">
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Summary -->
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Total Payments</h6>
+                            <h4 class="text-primary">{{ payment_history|length }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Total Amount</h6>
+                            <h4 class="text-success">RM {{ "%.2f"|format(payment_history|sum(attribute='amount_paid')) }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Paid</h6>
+                            <h4 class="text-info">{{ payment_history|selectattr('status', 'equalto', 'paid')|list|length }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Pending</h6>
+                            <h4 class="text-warning">{{ payment_history|selectattr('status', 'equalto', 'pending')|list|length }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-money-bill-wave fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No Payment History</h4>
+                <p class="text-muted">No payments have been made to this employee yet.</p>
+                <a href="{{ url_for('make_payment', employee_id=employee.employee_id) }}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Make First Payment
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

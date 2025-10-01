@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Photo - Employee Management System</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .photo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .main-card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        .photo-img {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .info-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            border-left: 5px solid #007bff;
+        }
+        .placeholder-img {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            border: 3px dashed #dee2e6;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            border-bottom: none;
+            padding: 20px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+        }
+        .badge {
+            font-size: 0.9em;
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-10">
+                <div class="card main-card">
+                    <div class="card-header text-white">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h3 class="mb-0">
+                                    <i class="fas fa-camera me-2"></i> Attendance Photo - {{ photo.full_name }}
+                                </h3>
+                            </div>
+                            <div class="col-auto">
+                                <a href="{{ url_for('view_employee_entries', employee_id=photo.employee_id) }}" 
+                                   class="btn btn-light btn-sm">
+                                    <i class="fas fa-arrow-left me-1"></i> Back to Employee
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="photo-container">
+                            <div class="row">
+                                <div class="col-lg-8 mb-4">
+                                    <div class="text-center">
+                                        {% if photo.photo_data %}
+                                            <img src="{{ url_for('photo_data', photo_id=photo.id) }}" 
+                                                 class="photo-img" 
+                                                 alt="Attendance Photo"
+                                                 onerror="this.style.display='none'; document.getElementById('placeholder').style.display='flex';">
+                                        {% endif %}
+                                        
+                                        <div id="placeholder" class="placeholder-img" 
+                                             style="{% if photo.photo_data %}display: none;{% else %}display: flex;{% endif %}">
+                                            <div class="text-center">
+                                                <i class="fas fa-camera fa-5x text-muted mb-3"></i>
+                                                <h4 class="text-muted">Photo Not Available</h4>
+                                                <p class="text-muted mb-0">The attendance photo could not be loaded.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="info-card">
+                                        <h5 class="text-primary mb-4">
+                                            <i class="fas fa-info-circle me-2"></i>Photo Details
+                                        </h5>
+                                        <div class="mb-3">
+                                            <strong class="text-dark">Employee Name:</strong><br>
+                                            <span class="text-muted">{{ photo.full_name }}</span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong class="text-dark">Employee ID:</strong><br>
+                                            <span class="text-muted">{{ photo.employee_id }}</span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong class="text-dark">Date:</strong><br>
+                                            <span class="text-primary fw-bold">{{ photo.work_date }}</span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong class="text-dark">Type:</strong><br>
+                                            <span class="badge bg-{{ 'success' if photo.photo_type == 'check_in' else 'warning' }}">
+                                                <i class="fas fa-{{ 'sign-in-alt' if photo.photo_type == 'check_in' else 'sign-out-alt' }} me-1"></i>
+                                                {{ photo.photo_type|replace('_', ' ')|title }}
+                                            </span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong class="text-dark">Recorded:</strong><br>
+                                            <span class="text-muted">{{ photo.created_date[:16] }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2 mt-4">
+                                        <a href="{{ url_for('view_employee_entries', employee_id=photo.employee_id) }}" 
+                                           class="btn btn-primary">
+                                            <i class="fas fa-arrow-left me-2"></i>Back to Employee Details
+                                        </a>
+                                        <button onclick="window.print()" class="btn btn-outline-secondary">
+                                            <i class="fas fa-print me-2"></i>Print
+                                        </button>
+                                        <button onclick="window.close()" class="btn btn-outline-secondary">
+                                            <i class="fas fa-times me-2"></i>Close
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

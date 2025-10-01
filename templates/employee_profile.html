@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-user-edit me-2"></i>My Profile</h2>
+        <p class="text-muted">Update your personal information and password</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('employee_dashboard') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-user me-2"></i>Personal Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('update_employee_profile') }}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Employee ID</label>
+                            <input type="text" class="form-control" value="{{ employee.employee_id }}" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Full Name</label>
+                            <input type="text" class="form-control" value="{{ employee.full_name }}" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label fw-semibold">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ employee.email or '' }}" placeholder="Enter your email">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label fw-semibold">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ employee.phone or '' }}" placeholder="Enter your phone number">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Hourly Rate</label>
+                            <input type="text" class="form-control" value="RM {{ '%.2f'|format(employee.hourly_rate) }}" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Status</label>
+                            <input type="text" class="form-control" value="{{ employee.status }}" readonly>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h6 class="mb-3"><i class="fas fa-lock me-2"></i>Change Password</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="current_password" class="form-label fw-semibold">Current Password</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password" 
+                                   placeholder="Enter current password">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="new_password" class="form-label fw-semibold">New Password</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" 
+                                   placeholder="Enter new password">
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Leave password fields blank if you don't want to change your password.
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-2"></i>Update Profile
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>Profile Summary</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="profile-avatar mb-3">
+                    <div class="avatar-circle bg-primary">
+                        {{ employee.full_name[0] }}{{ employee.full_name.split()[-1][0] if employee.full_name.split()|length > 1 else employee.full_name[1] if employee.full_name|length > 1 else employee.full_name[0] }}
+                    </div>
+                </div>
+                <h5>{{ employee.full_name }}</h5>
+                <p class="text-muted">{{ employee.employee_id }}</p>
+                <div class="badge bg-success mb-3">{{ employee.status }}</div>
+                <p class="small text-muted">
+                    <i class="fas fa-calendar me-1"></i>
+                    Member since {{ employee.created_date[:10] }}
+                </p>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Security Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Use a strong, unique password</li>
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Update your contact information regularly</li>
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Never share your password with anyone</li>
+                    <li class="mb-0"><i class="fas fa-check text-success me-2"></i>Log out after each session</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+}
+</style>
+{% endblock %}
