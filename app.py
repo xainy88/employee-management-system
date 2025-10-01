@@ -9,7 +9,7 @@ import base64
 app = Flask(__name__)
 app.secret_key = 'employee_management_system_secret_key_2024'
 
-# Database initialization - FIXED: Only run once
+# Database initialization - FIXED: No sample data insertion
 def init_db():
     # Check if database already exists to prevent recreation
     if os.path.exists('employees.db'):
@@ -108,75 +108,11 @@ def init_db():
         )
     ''')
     
-    # Check if sample data already exists
-    existing_employees = c.execute('SELECT COUNT(*) FROM employees').fetchone()[0]
-    
-    # Only insert sample data if no employees exist
-    if existing_employees == 0:
-        print("Inserting sample data...")
-        # Update sample employees with bank details
-        sample_employees = [
-            ('0001', 'Zain', 'zain@company.com', '012-345-6789', 9.00, 'A1234567', 'Maybank', 'Zain Ali', '1234567890', 'Active'),
-            ('0002', 'Sajjad', 'sajjad@company.com', '012-345-6790', 9.00, 'B7654321', 'CIMB Bank', 'Sajjad Khan', '9876543210', 'Active'),
-            ('0003', 'John Doe', 'john@company.com', '012-345-6791', 10.00, 'C1122334', 'Public Bank', 'John Doe', '1122334455', 'Active')
-        ]
-        
-        c.executemany('''
-            INSERT INTO employees (employee_id, full_name, email, phone, hourly_rate, passport_number, bank_name, bank_account_name, bank_account_number, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', sample_employees)
-        
-        # Insert sample work entries
-        sample_work_entries = [
-            ('0001', '2025-01-01', '08:00', '17:00', 60, 8, 0, 0),
-            ('0001', '2025-01-02', '08:00', '18:00', 60, 8, 1, 0),
-            ('0001', '2025-01-03', '08:00', '17:00', 60, 8, 0, 0),
-            ('0002', '2025-01-01', '08:00', '17:00', 60, 8, 0, 0),
-            ('0002', '2025-01-02', '08:00', '17:00', 60, 8, 0, 0),
-        ]
-        
-        c.executemany('''
-            INSERT INTO work_entries (employee_id, work_date, start_time, end_time, break_minutes, normal_hours, overtime_hours, holiday_hours)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', sample_work_entries)
-        
-        # Insert sample advance payments
-        sample_advances = [
-            ('0001', 500.00, '2025-01-15', 'Salary Advance'),
-            ('0002', 300.00, '2025-01-10', 'Emergency Advance'),
-        ]
-        
-        c.executemany('''
-            INSERT INTO advance_payments (employee_id, amount, payment_date, reason)
-            VALUES (?, ?, ?, ?)
-        ''', sample_advances)
-        
-        # Insert sample food expenses
-        sample_food_expenses = [
-            ('0001', 50.00, '2025-01-01', 'Lunch'),
-            ('0001', 30.00, '2025-01-02', 'Dinner'),
-            ('0002', 40.00, '2025-01-01', 'Lunch'),
-        ]
-        
-        c.executemany('''
-            INSERT INTO food_expenses (employee_id, amount, expense_date, description)
-            VALUES (?, ?, ?, ?)
-        ''', sample_food_expenses)
-        
-        # Insert sample payment records
-        sample_payments = [
-            ('0001', '2025-01-31', 1500.00, 'salary', 'January Salary Payment'),
-            ('0002', '2025-01-31', 1200.00, 'salary', 'January Salary Payment'),
-        ]
-        
-        c.executemany('''
-            INSERT INTO payment_records (employee_id, payment_date, amount_paid, payment_type, description)
-            VALUES (?, ?, ?, ?, ?)
-        ''', sample_payments)
+    # REMOVED SAMPLE DATA INSERTION - Database will start empty
     
     conn.commit()
     conn.close()
-    print("Database initialized successfully!")
+    print("Database initialized successfully with empty tables!")
 
 def get_db_connection():
     conn = sqlite3.connect('employees.db')
